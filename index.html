@@ -1,0 +1,1606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Manager</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    background: #f8f9fa;
+    color: #212529;
+    line-height: 1.5;
+  }
+
+  /* ── Top Nav ── */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 0 24px;
+    height: 52px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .top-bar h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #343a40;
+  }
+  .tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .tab {
+    padding: 6px 16px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #495057;
+    transition: background .15s, color .15s;
+  }
+  .tab:hover { background: #f1f3f5; }
+  .tab.active {
+    background: #343a40;
+    color: #fff;
+    border-color: #343a40;
+  }
+  .top-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    padding: 6px 14px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    color: #495057;
+    transition: background .15s;
+  }
+  .btn:hover { background: #f1f3f5; }
+  #importFile { display: none; }
+
+  /* ── Filter Bar ── */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 24px;
+    background: #fff;
+    border-bottom: 1px solid #dee2e6;
+    flex-wrap: wrap;
+  }
+  .filter-bar label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #868e96;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+  }
+  .filter-bar select {
+    padding: 5px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 13px;
+    background: #fff;
+    color: #495057;
+    cursor: pointer;
+    min-width: 120px;
+  }
+  .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── Table Container ── */
+  .table-wrap {
+    padding: 16px 24px 80px;
+  }
+
+  /* ── Empty State ── */
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: #868e96;
+  }
+  .empty-state p { margin-bottom: 16px; font-size: 15px; }
+  .empty-state button {
+    padding: 8px 20px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: #343a40;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  /* ── Table ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    table-layout: fixed;
+  }
+  col.col-done      { width: 52px; }
+  col.col-client    { width: 14%; }
+  col.col-task      { width: auto; }
+  col.col-urgency   { width: 140px; }
+  col.col-importance { width: 100px; }
+  col.col-effort    { width: 110px; }
+  col.col-due       { width: 115px; }
+  col.col-actions   { width: 44px; }
+
+  thead th {
+    padding: 10px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #868e96;
+    background: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    text-align: left;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    position: relative;
+  }
+  thead th:hover { color: #495057; }
+  thead th .sort-arrow {
+    margin-left: 4px;
+    font-size: 10px;
+    color: #adb5bd;
+  }
+  thead th .sort-arrow.active { color: #343a40; }
+  thead th:first-child { cursor: default; }
+  thead th:last-child  { cursor: default; }
+
+  tbody tr {
+    border-bottom: 1px solid #f1f3f5;
+    transition: background .1s;
+  }
+  tbody tr:hover { background: #f8f9fa; }
+  tbody tr.editing { background: #fff9db; }
+  tbody tr.done-row td { color: #adb5bd; text-decoration: line-through; }
+  tbody tr.done-row td:first-child { text-decoration: none; }
+
+  td {
+    padding: 8px 12px;
+    font-size: 14px;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Editable cells */
+  td[contenteditable="true"] {
+    outline: none;
+    cursor: text;
+  }
+  td[contenteditable="true"]:focus {
+    background: #fff;
+    box-shadow: inset 0 0 0 2px #339af0;
+    border-radius: 3px;
+    white-space: normal;
+    overflow: visible;
+  }
+
+  /* Select cells */
+  td select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  td select.auto-urgency {
+    color: #868e96;
+  }
+  td select:focus {
+    outline: none;
+    background: #fff;
+    box-shadow: inset 0 0 0 2px #339af0;
+    border-radius: 3px;
+    -webkit-appearance: auto;
+    appearance: auto;
+  }
+
+  /* Date input */
+  td input[type="date"] {
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-family: inherit;
+    color: inherit;
+    width: 100%;
+    padding: 0;
+    cursor: pointer;
+  }
+  td input[type="date"]:focus {
+    outline: none;
+    background: #fff;
+    box-shadow: inset 0 0 0 2px #339af0;
+    border-radius: 3px;
+  }
+
+  /* Checkbox */
+  td input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: #343a40;
+  }
+
+  /* Delete button */
+  .delete-btn {
+    opacity: 0;
+    border: none;
+    background: none;
+    cursor: pointer;
+    color: #adb5bd;
+    font-size: 16px;
+    padding: 4px;
+    border-radius: 4px;
+    transition: opacity .15s, color .15s, background .15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  tr:hover .delete-btn { opacity: 1; }
+  .delete-btn:hover { color: #e03131; background: #fff5f5; }
+
+  /* New-row placeholder */
+  .new-row td {
+    color: #adb5bd;
+    cursor: pointer;
+    font-style: italic;
+  }
+  .new-row:hover td { background: #f1f3f5; color: #868e96; }
+
+  /* Client auto-suggest */
+  .client-cell { position: relative; }
+  .suggest-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    z-index: 50;
+    max-height: 160px;
+    overflow-y: auto;
+    display: none;
+  }
+  .suggest-list.show { display: block; }
+  .suggest-item {
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .suggest-item:hover, .suggest-item.active { background: #e9ecef; }
+
+  /* Confirmation dialog overlay */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .confirm-box {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px 28px;
+    max-width: 380px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+  }
+  .confirm-box p { font-size: 14px; margin-bottom: 16px; color: #495057; }
+  .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .confirm-actions button {
+    padding: 6px 16px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .confirm-cancel { background: #fff; color: #495057; }
+  .confirm-cancel:hover { background: #f1f3f5; }
+  .confirm-danger { background: #e03131; color: #fff; border-color: #e03131; }
+  .confirm-danger:hover { background: #c92a2a; }
+
+  /* ── Matrix View ── */
+  .matrix-view {
+    display: none;
+    padding: 16px 24px 80px;
+  }
+  .matrix-view.active { display: block; }
+
+  .uncat-banner {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: #856404;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .uncat-banner a {
+    color: #856404;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  .matrix-grid {
+    display: grid;
+    grid-template-columns: auto 1fr 1fr;
+    grid-template-rows: auto 1fr 1fr;
+    gap: 0;
+    height: calc(100vh - 160px);
+    min-height: 500px;
+  }
+
+  /* Corner cell */
+  .matrix-corner { }
+
+  /* Top axis labels */
+  .matrix-col-label {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #495057;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Side axis labels */
+  .matrix-row-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #495057;
+    padding: 8px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    writing-mode: vertical-lr;
+    transform: rotate(180deg);
+  }
+
+  /* Quadrants */
+  .quadrant {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    margin: 4px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+  .quadrant-header {
+    padding: 8px 14px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .quadrant-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Quadrant themes */
+  .quadrant-do            { background: #d4edda; }
+  .quadrant-do .quadrant-header    { background: #28a745; }
+  .quadrant-schedule      { background: #cce5ff; }
+  .quadrant-schedule .quadrant-header { background: #007bff; }
+  .quadrant-delegate      { background: #fff3cd; }
+  .quadrant-delegate .quadrant-header { background: #ffc107; color: #212529; }
+  .quadrant-delete        { background: #f8d7da; }
+  .quadrant-delete .quadrant-header   { background: #dc3545; }
+
+  /* Task cards */
+  .matrix-card {
+    background: #fff;
+    border: 1px solid rgba(0,0,0,.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+    transition: box-shadow .15s;
+  }
+  .matrix-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+  .matrix-card input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    margin-top: 2px;
+    cursor: pointer;
+    accent-color: #343a40;
+    flex-shrink: 0;
+  }
+  .matrix-card-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .matrix-card-client {
+    font-size: 12px;
+    font-weight: 700;
+    color: #495057;
+    margin-bottom: 2px;
+  }
+  .matrix-card-task {
+    font-size: 13px;
+    color: #212529;
+    line-height: 1.4;
+  }
+  .matrix-card-due {
+    font-size: 11px;
+    color: #868e96;
+    margin-top: 4px;
+  }
+
+  /* Effort badges */
+  .effort-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .3px;
+  }
+  .effort-1 { background: #d3f9d8; color: #2b8a3e; }
+  .effort-2 { background: #fff3bf; color: #e67700; }
+  .effort-3 { background: #ffd8d8; color: #c92a2a; }
+
+  /* Empty quadrant placeholder */
+  .quadrant-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #adb5bd;
+    font-size: 13px;
+    font-style: italic;
+  }
+
+  /* ── Sync Indicator ── */
+  .sync-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sync-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #adb5bd;
+    flex-shrink: 0;
+    transition: background .3s;
+  }
+  .sync-dot.syncing { background: #fcc419; animation: pulse .8s infinite alternate; }
+  .sync-dot.synced  { background: #51cf66; }
+  .sync-dot.error   { background: #ff6b6b; }
+  @keyframes pulse { from { opacity: 1; } to { opacity: .4; } }
+  .sync-label {
+    font-size: 11px;
+    color: #868e96;
+    white-space: nowrap;
+  }
+  .gear-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #868e96;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color .15s, background .15s;
+    line-height: 1;
+  }
+  .gear-btn:hover { color: #495057; background: #f1f3f5; }
+
+  /* ── Settings Dialog ── */
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+  }
+  .settings-box {
+    background: #fff;
+    border-radius: 12px;
+    padding: 28px 32px;
+    width: 420px;
+    max-width: 90vw;
+    box-shadow: 0 8px 30px rgba(0,0,0,.18);
+  }
+  .settings-box h2 {
+    font-size: 16px;
+    font-weight: 700;
+    color: #212529;
+    margin-bottom: 4px;
+  }
+  .settings-box .subtitle {
+    font-size: 12px;
+    color: #868e96;
+    margin-bottom: 20px;
+  }
+  .settings-field {
+    margin-bottom: 16px;
+  }
+  .settings-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: 4px;
+  }
+  .settings-field input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: monospace;
+    color: #495057;
+  }
+  .settings-field input:focus {
+    outline: none;
+    border-color: #339af0;
+    box-shadow: 0 0 0 2px rgba(51,154,240,.2);
+  }
+  .settings-field .hint {
+    font-size: 11px;
+    color: #adb5bd;
+    margin-top: 4px;
+  }
+  .settings-status {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+  .settings-status.connected { background: #d3f9d8; color: #2b8a3e; }
+  .settings-status.disconnected { background: #f1f3f5; color: #868e96; }
+  .settings-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .settings-actions button {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .settings-connect { background: #343a40; color: #fff; border-color: #343a40; }
+  .settings-connect:hover { background: #212529; }
+  .settings-disconnect { background: #fff; color: #e03131; border-color: #e03131; }
+  .settings-disconnect:hover { background: #fff5f5; }
+  .settings-close { background: #fff; color: #495057; }
+  .settings-close:hover { background: #f1f3f5; }
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ── -->
+<div class="top-bar">
+  <h1>Task Manager</h1>
+  <div class="tabs">
+    <button class="tab active" data-view="list">Task List</button>
+    <button class="tab" data-view="matrix">Eisenhower Matrix</button>
+  </div>
+  <div class="top-actions">
+    <div class="sync-wrap" id="syncWrap" style="display:none;">
+      <span class="sync-dot" id="syncDot"></span>
+      <span class="sync-label" id="syncLabel">Not connected</span>
+    </div>
+    <button class="gear-btn" id="settingsBtn" title="Cloud Sync Settings">&#9881;</button>
+    <button class="btn" id="exportBtn">Export</button>
+    <button class="btn" id="importBtn">Import</button>
+    <input type="file" id="importFile" accept=".json">
+  </div>
+</div>
+
+<!-- ── Filter Bar ── -->
+<div class="filter-bar" id="filterBar">
+  <div class="filter-group">
+    <label>Status</label>
+    <select id="filterStatus">
+      <option value="active" selected>Active</option>
+      <option value="completed">Completed</option>
+      <option value="all">All</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Client</label>
+    <select id="filterClient"><option value="">All</option></select>
+  </div>
+  <div class="filter-group">
+    <label>Urgency</label>
+    <select id="filterUrgency">
+      <option value="">All</option>
+      <option value="urgent">Urgent</option>
+      <option value="not-urgent">Not Urgent</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Importance</label>
+    <select id="filterImportance">
+      <option value="">All</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Effort</label>
+    <select id="filterEffort">
+      <option value="">All</option>
+      <option value="1">1 — Quick</option>
+      <option value="2">2 — Focus</option>
+      <option value="3">3 — Deep</option>
+    </select>
+  </div>
+</div>
+
+<!-- ── Table ── -->
+<div class="table-wrap" id="listView">
+  <table id="taskTable">
+    <colgroup>
+      <col class="col-done">
+      <col class="col-client">
+      <col class="col-task">
+      <col class="col-urgency">
+      <col class="col-importance">
+      <col class="col-effort">
+      <col class="col-due">
+      <col class="col-actions">
+    </colgroup>
+    <thead>
+      <tr>
+        <th></th>
+        <th data-sort="client">Client <span class="sort-arrow"></span></th>
+        <th data-sort="task">Task <span class="sort-arrow"></span></th>
+        <th data-sort="urgency">Urgency <span class="sort-arrow"></span></th>
+        <th data-sort="importance">Importance <span class="sort-arrow"></span></th>
+        <th data-sort="effort">Effort <span class="sort-arrow"></span></th>
+        <th data-sort="dueDate">Due Date <span class="sort-arrow"></span></th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="taskBody"></tbody>
+  </table>
+</div>
+
+<!-- ── Eisenhower Matrix View ── -->
+<div class="matrix-view" id="matrixView">
+  <div id="uncatBanner"></div>
+  <div class="matrix-grid">
+    <div class="matrix-corner"></div>
+    <div class="matrix-col-label">Urgent</div>
+    <div class="matrix-col-label">Not Urgent</div>
+    <div class="matrix-row-label">Important</div>
+    <div class="quadrant quadrant-do" id="qDo">
+      <div class="quadrant-header">Do</div>
+      <div class="quadrant-body" id="qDoBody"></div>
+    </div>
+    <div class="quadrant quadrant-schedule" id="qSchedule">
+      <div class="quadrant-header">Schedule</div>
+      <div class="quadrant-body" id="qScheduleBody"></div>
+    </div>
+    <div class="matrix-row-label">Not Important</div>
+    <div class="quadrant quadrant-delegate" id="qDelegate">
+      <div class="quadrant-header">Delegate</div>
+      <div class="quadrant-body" id="qDelegateBody"></div>
+    </div>
+    <div class="quadrant quadrant-delete" id="qDelete">
+      <div class="quadrant-header">Delete</div>
+      <div class="quadrant-body" id="qDeleteBody"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data ──
+const STORAGE_KEY = 'taskmanager_tasks';
+let tasks = [];
+let sortCol = null;
+let sortDir = 'asc';
+let saveTimer = null;
+
+const DEFAULT_TASKS = [
+  { client: 'Sapphire Social', task: 'Map out social strategy & creative needs', urgency: null, importance: 2, effort: 2, dueDate: '2026-03-06', done: false },
+  { client: 'ECU', task: 'Make plan for leadership workshop & deck', urgency: null, importance: 2, effort: 3, dueDate: '2026-03-27', done: false },
+  { client: 'Green Llama', task: 'Schedule 2 meetings: design k/o + report review', urgency: null, importance: 3, effort: 1, dueDate: '2026-03-05', done: false },
+  { client: 'Green Llama', task: 'Create report for Meta test #1 results', urgency: null, importance: 3, effort: 2, dueDate: '2026-03-05', done: false },
+  { client: 'Green Llama', task: 'Schedule time to review test 1 report', urgency: null, importance: 3, effort: 1, dueDate: '2026-03-05', done: false },
+  { client: 'Green Llama', task: 'Create briefs + k/o Stacey and Kelsey on test #2 video needs', urgency: null, importance: 3, effort: 2, dueDate: '2026-03-05', done: false },
+  { client: "Yella's", task: 'Create new social strategy for Danielle', urgency: null, importance: 3, effort: 2, dueDate: '2026-03-04', done: false },
+  { client: 'Rendezvous', task: 'Map out social strategy; lunch, system, model(?)', urgency: null, importance: 2, effort: 2, dueDate: '2026-03-05', done: false },
+  { client: 'Mountain Air', task: 'Use Claude to make deck for leadership pitch', urgency: null, importance: 2, effort: 2, dueDate: '2026-03-06', done: false },
+];
+
+function generateId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+}
+
+function loadTasks() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    try {
+      tasks = JSON.parse(raw);
+      // Migrate: if tasks still have old hardcoded urgency values from v1
+      // and no migration flag, reset urgency to null so auto-calc takes over
+      if (!localStorage.getItem('taskmanager_v2_migrated')) {
+        tasks.forEach(t => { t.urgency = null; });
+        localStorage.setItem('taskmanager_v2_migrated', '1');
+        saveTasksImmediate();
+      }
+      return;
+    } catch(e) { /* fall through */ }
+  }
+  // First load — seed with defaults
+  tasks = DEFAULT_TASKS.map(t => ({
+    id: generateId(),
+    ...t,
+    createdAt: new Date().toISOString()
+  }));
+  localStorage.setItem('taskmanager_v2_migrated', '1');
+  saveTasks();
+}
+
+function saveTasks() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+  }, 300);
+}
+
+function saveTasksImmediate() {
+  clearTimeout(saveTimer);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+
+// ── Helpers ──
+function uniqueClients() {
+  const set = new Set();
+  tasks.forEach(t => { if (t.client) set.add(t.client); });
+  return [...set].sort();
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso + 'T00:00:00');
+  return `${d.getMonth()+1}/${d.getDate()}/${d.getFullYear()}`;
+}
+
+function isoFromInput(val) {
+  return val || null;
+}
+
+// ── Auto-Urgency from Due Date ──
+// Returns calendar days from today to dueDate (0 = due today, negative = overdue)
+function daysUntil(dueDateStr) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDateStr + 'T00:00:00');
+  return Math.round((due - today) / (1000 * 60 * 60 * 24));
+}
+
+// Returns effective urgency: manual override if set, otherwise auto from due date.
+// Urgent if due today, tomorrow, or the day after (within 2 days). Also urgent if overdue.
+// No due date and no override → 1 (not urgent).
+function getEffectiveUrgency(task) {
+  if (task.urgency != null) return task.urgency; // manual override
+  if (!task.dueDate) return 1; // no due date = not urgent
+  const days = daysUntil(task.dueDate);
+  return days <= 2 ? 3 : 1; // today + 2 following days = urgent
+}
+
+const EFFORT_LABELS = { 1: 'Quick', 2: 'Focus', 3: 'Deep' };
+
+// ── Filtering ──
+function getFiltered() {
+  const status = document.getElementById('filterStatus').value;
+  const client = document.getElementById('filterClient').value;
+  const urgency = document.getElementById('filterUrgency').value;
+  const importance = document.getElementById('filterImportance').value;
+  const effort = document.getElementById('filterEffort').value;
+
+  return tasks.filter(t => {
+    if (status === 'active' && t.done) return false;
+    if (status === 'completed' && !t.done) return false;
+    if (client && t.client !== client) return false;
+    if (urgency === 'urgent' && getEffectiveUrgency(t) < 2) return false;
+    if (urgency === 'not-urgent' && getEffectiveUrgency(t) >= 2) return false;
+    if (importance && t.importance != importance) return false;
+    if (effort && t.effort != effort) return false;
+    return true;
+  });
+}
+
+// ── Sorting ──
+function getSorted(list) {
+  if (!sortCol) return list;
+  const copy = [...list];
+  copy.sort((a, b) => {
+    let va = sortCol === 'urgency' ? getEffectiveUrgency(a) : a[sortCol];
+    let vb = sortCol === 'urgency' ? getEffectiveUrgency(b) : b[sortCol];
+    if (va == null) va = '';
+    if (vb == null) vb = '';
+    if (typeof va === 'number' && typeof vb === 'number') {
+      return sortDir === 'asc' ? va - vb : vb - va;
+    }
+    va = String(va).toLowerCase();
+    vb = String(vb).toLowerCase();
+    if (va < vb) return sortDir === 'asc' ? -1 : 1;
+    if (va > vb) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+  return copy;
+}
+
+// ── Render ──
+function render() {
+  updateClientFilter();
+  const filtered = getSorted(getFiltered());
+  const tbody = document.getElementById('taskBody');
+  tbody.innerHTML = '';
+
+  // Update sort arrows
+  document.querySelectorAll('thead th[data-sort]').forEach(th => {
+    const arrow = th.querySelector('.sort-arrow');
+    if (th.dataset.sort === sortCol) {
+      arrow.textContent = sortDir === 'asc' ? '▲' : '▼';
+      arrow.classList.add('active');
+    } else {
+      arrow.textContent = '';
+      arrow.classList.remove('active');
+    }
+  });
+
+  if (tasks.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <p>No tasks yet. Click below to add your first task.</p>
+        <button onclick="addTask()">Add Task</button>
+      </div>
+    </td></tr>`;
+    return;
+  }
+
+  const status = document.getElementById('filterStatus').value;
+  if (filtered.length === 0) {
+    const msg = status === 'completed'
+      ? 'No completed tasks yet.'
+      : 'No tasks match the current filters.';
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state"><p>${msg}</p></div>
+    </td></tr>`;
+    // Still add the new-row
+    appendNewRow(tbody);
+    return;
+  }
+
+  filtered.forEach(task => {
+    const tr = document.createElement('tr');
+    tr.dataset.id = task.id;
+    if (task.done) tr.classList.add('done-row');
+
+    // Done checkbox
+    const tdDone = document.createElement('td');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = task.done;
+    cb.addEventListener('change', () => {
+      task.done = cb.checked;
+      saveTasks();
+      render();
+    });
+    tdDone.appendChild(cb);
+    tr.appendChild(tdDone);
+
+    // Client
+    const tdClient = document.createElement('td');
+    tdClient.classList.add('client-cell');
+    tdClient.contentEditable = true;
+    tdClient.textContent = task.client || '';
+    tdClient.addEventListener('focus', () => { tr.classList.add('editing'); showSuggestions(tdClient, task); });
+    tdClient.addEventListener('blur', () => {
+      setTimeout(() => {
+        tr.classList.remove('editing');
+        hideSuggestions(tdClient);
+        task.client = tdClient.textContent.trim();
+        saveTasks();
+      }, 150);
+    });
+    tdClient.addEventListener('input', () => { showSuggestions(tdClient, task); });
+    tdClient.addEventListener('keydown', (e) => { handleSuggestKey(e, tdClient, task); });
+    tr.appendChild(tdClient);
+
+    // Task
+    const tdTask = document.createElement('td');
+    tdTask.contentEditable = true;
+    tdTask.textContent = task.task || '';
+    tdTask.addEventListener('focus', () => tr.classList.add('editing'));
+    tdTask.addEventListener('blur', () => {
+      tr.classList.remove('editing');
+      task.task = tdTask.textContent.trim();
+      saveTasks();
+    });
+    tr.appendChild(tdTask);
+
+    // Urgency (auto-calculated from due date, with manual override)
+    const tdUrg = document.createElement('td');
+    const selUrg = document.createElement('select');
+    const autoLabel = task.dueDate ? `Auto (${getEffectiveUrgency({...task, urgency: null})})` : 'Auto';
+    [{ v: '', label: autoLabel }, { v: '1', label: '1 — Not Urgent' }, { v: '2', label: '2 — Urgent' }, { v: '3', label: '3 — Urgent' }].forEach(({v, label}) => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = label;
+      if ((task.urgency != null && String(task.urgency) === v) || (task.urgency == null && v === '')) opt.selected = true;
+      selUrg.appendChild(opt);
+    });
+    if (task.urgency == null) selUrg.classList.add('auto-urgency');
+    selUrg.addEventListener('change', () => {
+      task.urgency = selUrg.value ? Number(selUrg.value) : null;
+      if (task.urgency == null) selUrg.classList.add('auto-urgency');
+      else selUrg.classList.remove('auto-urgency');
+      saveTasks();
+    });
+    selUrg.addEventListener('focus', () => tr.classList.add('editing'));
+    selUrg.addEventListener('blur', () => tr.classList.remove('editing'));
+    tdUrg.appendChild(selUrg);
+    tr.appendChild(tdUrg);
+
+    // Importance
+    const tdImp = document.createElement('td');
+    const selImp = document.createElement('select');
+    ['', '1', '2', '3'].forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v || '—';
+      if ((task.importance != null && String(task.importance) === v) || (task.importance == null && v === '')) opt.selected = true;
+      selImp.appendChild(opt);
+    });
+    selImp.addEventListener('change', () => {
+      task.importance = selImp.value ? Number(selImp.value) : null;
+      saveTasks();
+    });
+    selImp.addEventListener('focus', () => tr.classList.add('editing'));
+    selImp.addEventListener('blur', () => tr.classList.remove('editing'));
+    tdImp.appendChild(selImp);
+    tr.appendChild(tdImp);
+
+    // Effort
+    const tdEffort = document.createElement('td');
+    const selEffort = document.createElement('select');
+    [{ v: '', label: '—' }, { v: '1', label: '1 — Quick' }, { v: '2', label: '2 — Focus' }, { v: '3', label: '3 — Deep' }].forEach(({v, label}) => {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = label;
+      if ((task.effort != null && String(task.effort) === v) || (task.effort == null && v === '')) opt.selected = true;
+      selEffort.appendChild(opt);
+    });
+    selEffort.addEventListener('change', () => {
+      task.effort = selEffort.value ? Number(selEffort.value) : null;
+      saveTasks();
+    });
+    selEffort.addEventListener('focus', () => tr.classList.add('editing'));
+    selEffort.addEventListener('blur', () => tr.classList.remove('editing'));
+    tdEffort.appendChild(selEffort);
+    tr.appendChild(tdEffort);
+
+    // Due Date
+    const tdDue = document.createElement('td');
+    const dateInput = document.createElement('input');
+    dateInput.type = 'date';
+    dateInput.value = task.dueDate || '';
+    dateInput.addEventListener('change', () => {
+      task.dueDate = isoFromInput(dateInput.value);
+      saveTasks();
+    });
+    dateInput.addEventListener('focus', () => tr.classList.add('editing'));
+    dateInput.addEventListener('blur', () => tr.classList.remove('editing'));
+    tdDue.appendChild(dateInput);
+    tr.appendChild(tdDue);
+
+    // Delete
+    const tdDel = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.className = 'delete-btn';
+    delBtn.innerHTML = '&#x2715;';
+    delBtn.title = 'Delete task';
+    delBtn.addEventListener('click', () => confirmDelete(task));
+    tdDel.appendChild(delBtn);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+  });
+
+  appendNewRow(tbody);
+}
+
+function appendNewRow(tbody) {
+  const tr = document.createElement('tr');
+  tr.className = 'new-row';
+  const td = document.createElement('td');
+  td.colSpan = 8;
+  td.textContent = '+ Add new task...';
+  td.addEventListener('click', () => addTask());
+  tr.appendChild(td);
+  tbody.appendChild(tr);
+}
+
+// ── Add / Delete ──
+function addTask() {
+  const t = {
+    id: generateId(),
+    client: '',
+    task: '',
+    urgency: null,
+    importance: null,
+    effort: null,
+    dueDate: null,
+    done: false,
+    createdAt: new Date().toISOString()
+  };
+  tasks.push(t);
+  saveTasks();
+  render();
+  // Focus the client cell of the new row
+  const rows = document.querySelectorAll('#taskBody tr[data-id]');
+  const lastRow = rows[rows.length - 1];
+  if (lastRow) {
+    const clientCell = lastRow.querySelector('.client-cell');
+    if (clientCell) clientCell.focus();
+  }
+}
+
+function confirmDelete(task) {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+  overlay.innerHTML = `
+    <div class="confirm-box">
+      <p>Delete "${task.task || 'this task'}"?</p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel">Cancel</button>
+        <button class="confirm-danger">Delete</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('.confirm-cancel').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('.confirm-danger').addEventListener('click', () => {
+    tasks = tasks.filter(t => t.id !== task.id);
+    saveTasksImmediate();
+    overlay.remove();
+    render();
+  });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+// ── Client Auto-suggest ──
+function showSuggestions(cell, task) {
+  let list = cell.querySelector('.suggest-list');
+  if (!list) {
+    list = document.createElement('div');
+    list.className = 'suggest-list';
+    cell.appendChild(list);
+  }
+
+  const val = cell.textContent.replace(/\n/g, '').trim().toLowerCase();
+  // Exclude content of the suggest-list from our value
+  const clients = uniqueClients().filter(c =>
+    c.toLowerCase().includes(val) && c !== cell.childNodes[0]?.textContent?.trim()
+  );
+
+  if (!val || clients.length === 0) {
+    list.classList.remove('show');
+    return;
+  }
+
+  list.innerHTML = '';
+  clients.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'suggest-item';
+    item.textContent = c;
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      // Clear all child nodes and set text
+      while (cell.firstChild && cell.firstChild !== list) cell.removeChild(cell.firstChild);
+      cell.insertBefore(document.createTextNode(c), list);
+      task.client = c;
+      saveTasks();
+      list.classList.remove('show');
+    });
+    list.appendChild(item);
+  });
+  list.classList.add('show');
+}
+
+function hideSuggestions(cell) {
+  const list = cell.querySelector('.suggest-list');
+  if (list) list.classList.remove('show');
+}
+
+function handleSuggestKey(e, cell, task) {
+  const list = cell.querySelector('.suggest-list');
+  if (!list || !list.classList.contains('show')) {
+    if (e.key === 'Enter') { e.preventDefault(); cell.blur(); }
+    return;
+  }
+  const items = list.querySelectorAll('.suggest-item');
+  let idx = [...items].findIndex(i => i.classList.contains('active'));
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (idx >= 0) items[idx].classList.remove('active');
+    idx = (idx + 1) % items.length;
+    items[idx].classList.add('active');
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (idx >= 0) items[idx].classList.remove('active');
+    idx = idx <= 0 ? items.length - 1 : idx - 1;
+    items[idx].classList.add('active');
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (idx >= 0) {
+      items[idx].dispatchEvent(new MouseEvent('mousedown'));
+    }
+    cell.blur();
+  } else if (e.key === 'Escape') {
+    list.classList.remove('show');
+  }
+}
+
+// ── Client Filter Dropdown ──
+function updateClientFilter() {
+  const sel = document.getElementById('filterClient');
+  const current = sel.value;
+  const clients = uniqueClients();
+  sel.innerHTML = '<option value="">All</option>';
+  clients.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    if (c === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Sort Handlers ──
+document.querySelectorAll('thead th[data-sort]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.dataset.sort;
+    if (sortCol === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortCol = col;
+      sortDir = 'asc';
+    }
+    render();
+  });
+});
+
+// ── Filter Handlers ──
+['filterStatus', 'filterClient', 'filterUrgency', 'filterImportance', 'filterEffort'].forEach(id => {
+  document.getElementById(id).addEventListener('change', render);
+});
+
+// ── Export ──
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `tasks_backup_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+// ── Import ──
+document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('importFile').click();
+});
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (!Array.isArray(data)) throw new Error('Invalid format');
+      if (!confirm('This will replace all current tasks. Continue?')) return;
+      tasks = data;
+      saveTasksImmediate();
+      render();
+    } catch(err) {
+      alert('Invalid JSON file. Please select a valid task backup.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// ── View Switching ──
+let currentView = 'list';
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const view = tab.dataset.view;
+    if (view === currentView) return;
+    currentView = view;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+
+    const filterBar = document.getElementById('filterBar');
+    const listView = document.getElementById('listView');
+    const matrixView = document.getElementById('matrixView');
+
+    if (view === 'list') {
+      filterBar.style.display = '';
+      listView.style.display = '';
+      matrixView.classList.remove('active');
+      render();
+    } else {
+      filterBar.style.display = 'none';
+      listView.style.display = 'none';
+      matrixView.classList.add('active');
+      renderMatrix();
+    }
+  });
+});
+
+// ── Matrix Rendering ──
+function renderMatrix() {
+  const activeTasks = tasks.filter(t => !t.done);
+  const categorized = activeTasks.filter(t => t.importance != null);
+  const uncatCount = activeTasks.length - categorized.length;
+
+  // Uncategorized banner
+  const banner = document.getElementById('uncatBanner');
+  if (uncatCount > 0) {
+    banner.innerHTML = `<div class="uncat-banner">${uncatCount} task${uncatCount > 1 ? 's' : ''} missing Importance and not shown in the matrix. <a id="uncatLink">Go to Task List</a></div>`;
+    document.getElementById('uncatLink').addEventListener('click', () => {
+      document.querySelector('.tab[data-view="list"]').click();
+    });
+  } else {
+    banner.innerHTML = '';
+  }
+
+  // Classify tasks into quadrants using effective urgency
+  const quadrants = { do: [], schedule: [], delegate: [], delete: [] };
+  categorized.forEach(t => {
+    const urgent = getEffectiveUrgency(t) >= 2;
+    const important = t.importance >= 2;
+    if (urgent && important) quadrants.do.push(t);
+    else if (!urgent && important) quadrants.schedule.push(t);
+    else if (urgent && !important) quadrants.delegate.push(t);
+    else quadrants.delete.push(t);
+  });
+
+  // Render each quadrant
+  renderQuadrant('qDoBody', quadrants.do);
+  renderQuadrant('qScheduleBody', quadrants.schedule);
+  renderQuadrant('qDelegateBody', quadrants.delegate);
+  renderQuadrant('qDeleteBody', quadrants.delete);
+}
+
+function renderQuadrant(containerId, taskList) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+
+  if (taskList.length === 0) {
+    const empty = document.createElement('div');
+    empty.className = 'quadrant-empty';
+    empty.textContent = 'No tasks';
+    container.appendChild(empty);
+    return;
+  }
+
+  taskList.forEach(task => {
+    const card = document.createElement('div');
+    card.className = 'matrix-card';
+
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = false;
+    cb.addEventListener('change', () => {
+      task.done = true;
+      saveTasksImmediate();
+      renderMatrix();
+    });
+    card.appendChild(cb);
+
+    const content = document.createElement('div');
+    content.className = 'matrix-card-content';
+
+    if (task.client) {
+      const clientEl = document.createElement('div');
+      clientEl.className = 'matrix-card-client';
+      clientEl.textContent = task.client;
+      content.appendChild(clientEl);
+    }
+
+    const taskEl = document.createElement('div');
+    taskEl.className = 'matrix-card-task';
+    taskEl.textContent = task.task;
+    content.appendChild(taskEl);
+
+    const metaEl = document.createElement('div');
+    metaEl.className = 'matrix-card-due';
+    const parts = [];
+    if (task.effort != null) parts.push(`<span class="effort-badge effort-${task.effort}">${EFFORT_LABELS[task.effort]}</span>`);
+    if (task.dueDate) parts.push('Due ' + formatDate(task.dueDate));
+    if (parts.length) {
+      metaEl.innerHTML = parts.join(' &nbsp; ');
+      content.appendChild(metaEl);
+    }
+
+    card.appendChild(content);
+    container.appendChild(card);
+  });
+}
+
+// ── Cloud Sync (JSONBin.io) ──
+const SYNC_KEY_API = 'taskmanager_jsonbin_apikey';
+const SYNC_KEY_BIN = 'taskmanager_jsonbin_binid';
+let cloudSyncTimer = null;
+
+function getSyncConfig() {
+  return {
+    apiKey: localStorage.getItem(SYNC_KEY_API) || '',
+    binId: localStorage.getItem(SYNC_KEY_BIN) || ''
+  };
+}
+
+function isSyncEnabled() {
+  const c = getSyncConfig();
+  return !!(c.apiKey && c.binId);
+}
+
+function updateSyncIndicator(status) {
+  const wrap = document.getElementById('syncWrap');
+  const dot = document.getElementById('syncDot');
+  const label = document.getElementById('syncLabel');
+  if (!isSyncEnabled()) {
+    wrap.style.display = 'none';
+    return;
+  }
+  wrap.style.display = 'flex';
+  dot.className = 'sync-dot ' + status;
+  const labels = { idle: 'Connected', syncing: 'Syncing...', synced: 'Synced', error: 'Sync error' };
+  label.textContent = labels[status] || status;
+}
+
+async function loadFromCloud() {
+  if (!isSyncEnabled()) return;
+  const { apiKey, binId } = getSyncConfig();
+  try {
+    updateSyncIndicator('syncing');
+    const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+      headers: { 'X-Master-Key': apiKey }
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (Array.isArray(data.record)) {
+      tasks = data.record;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+      if (currentView === 'list') render();
+      else renderMatrix();
+    }
+    updateSyncIndicator('synced');
+  } catch (e) {
+    console.error('Cloud load failed:', e);
+    updateSyncIndicator('error');
+  }
+}
+
+function syncToCloud() {
+  if (!isSyncEnabled()) return;
+  clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(async () => {
+    const { apiKey, binId } = getSyncConfig();
+    try {
+      updateSyncIndicator('syncing');
+      const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': apiKey
+        },
+        body: JSON.stringify(tasks)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      updateSyncIndicator('synced');
+    } catch (e) {
+      console.error('Cloud sync failed:', e);
+      updateSyncIndicator('error');
+    }
+  }, 2000);
+}
+
+async function createBin(apiKey) {
+  const res = await fetch('https://api.jsonbin.io/v3/b', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': apiKey,
+      'X-Bin-Name': 'taskmanager'
+    },
+    body: JSON.stringify(tasks)
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.metadata.id;
+}
+
+// Hook into existing save functions
+const _origSaveTasks = saveTasks;
+saveTasks = function() {
+  _origSaveTasks();
+  syncToCloud();
+};
+
+const _origSaveImmediate = saveTasksImmediate;
+saveTasksImmediate = function() {
+  _origSaveImmediate();
+  syncToCloud();
+};
+
+// ── Settings Dialog ──
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+
+function openSettings() {
+  const config = getSyncConfig();
+  const connected = isSyncEnabled();
+
+  const overlay = document.createElement('div');
+  overlay.className = 'settings-overlay';
+  overlay.innerHTML = `
+    <div class="settings-box">
+      <h2>Cloud Sync</h2>
+      <p class="subtitle">Sync tasks across devices using JSONBin.io (free)</p>
+      <div class="settings-status ${connected ? 'connected' : 'disconnected'}">
+        ${connected ? 'Connected — tasks sync automatically' : 'Not connected — tasks stored locally only'}
+      </div>
+      <div class="settings-field">
+        <label>API Key</label>
+        <input type="text" id="settingsApiKey" placeholder="Paste your JSONBin.io API key" value="${config.apiKey}">
+        <div class="hint">Get yours free at jsonbin.io → API Keys</div>
+      </div>
+      <div class="settings-field">
+        <label>Bin ID</label>
+        <input type="text" id="settingsBinId" placeholder="Auto-created on first connect" value="${config.binId}">
+        <div class="hint">Share this ID to connect a second device</div>
+      </div>
+      <div id="settingsError" style="color:#e03131;font-size:13px;margin-bottom:12px;display:none;"></div>
+      <div class="settings-actions">
+        ${connected ? '<button class="settings-disconnect" id="settingsDisconnect">Disconnect</button>' : ''}
+        <button class="settings-close" id="settingsClose">Cancel</button>
+        <button class="settings-connect" id="settingsConnect">${connected ? 'Reconnect' : 'Connect'}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+  overlay.querySelector('#settingsClose').addEventListener('click', () => overlay.remove());
+
+  if (connected) {
+    overlay.querySelector('#settingsDisconnect').addEventListener('click', () => {
+      localStorage.removeItem(SYNC_KEY_API);
+      localStorage.removeItem(SYNC_KEY_BIN);
+      updateSyncIndicator('idle');
+      document.getElementById('syncWrap').style.display = 'none';
+      overlay.remove();
+    });
+  }
+
+  overlay.querySelector('#settingsConnect').addEventListener('click', async () => {
+    const apiKey = overlay.querySelector('#settingsApiKey').value.trim();
+    const binId = overlay.querySelector('#settingsBinId').value.trim();
+    const errEl = overlay.querySelector('#settingsError');
+    const btn = overlay.querySelector('#settingsConnect');
+
+    if (!apiKey) {
+      errEl.textContent = 'API key is required.';
+      errEl.style.display = 'block';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Connecting...';
+    errEl.style.display = 'none';
+
+    try {
+      if (binId) {
+        // Connect to existing bin — verify it works
+        const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+          headers: { 'X-Master-Key': apiKey }
+        });
+        if (!res.ok) throw new Error('Could not access that bin. Check your API key and Bin ID.');
+        localStorage.setItem(SYNC_KEY_API, apiKey);
+        localStorage.setItem(SYNC_KEY_BIN, binId);
+        await loadFromCloud();
+      } else {
+        // First time — create a new bin
+        localStorage.setItem(SYNC_KEY_API, apiKey);
+        const newBinId = await createBin(apiKey);
+        localStorage.setItem(SYNC_KEY_BIN, newBinId);
+      }
+      updateSyncIndicator('synced');
+      overlay.remove();
+    } catch (e) {
+      errEl.textContent = e.message;
+      errEl.style.display = 'block';
+      btn.disabled = false;
+      btn.textContent = 'Connect';
+    }
+  });
+}
+
+// ── Init ──
+loadTasks();
+render();
+if (isSyncEnabled()) {
+  updateSyncIndicator('idle');
+  loadFromCloud();
+}
+</script>
+</body>
+</html>

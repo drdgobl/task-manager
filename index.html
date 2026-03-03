@@ -9,9 +9,10 @@
 
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-    background: #f8f9fa;
+    background: #f2f2f7;
     color: #212529;
     line-height: 1.5;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* ── Top Nav ── */
@@ -21,7 +22,7 @@
     justify-content: space-between;
     background: #fff;
     border-bottom: 1px solid #dee2e6;
-    padding: 0 24px;
+    padding: 0 16px;
     height: 52px;
     position: sticky;
     top: 0;
@@ -55,6 +56,7 @@
   }
   .top-actions {
     display: flex;
+    align-items: center;
     gap: 8px;
   }
   .btn {
@@ -71,18 +73,73 @@
   .btn:hover { background: #f1f3f5; }
   #importFile { display: none; }
 
+  /* Icon buttons in top bar */
+  .icon-btn {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #868e96;
+    padding: 6px;
+    border-radius: 6px;
+    transition: color .15s, background .15s;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn:hover { color: #495057; background: #f1f3f5; }
+
+  /* Overflow menu */
+  .overflow-wrap {
+    position: relative;
+  }
+  .overflow-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 4px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12);
+    min-width: 160px;
+    z-index: 110;
+    overflow: hidden;
+  }
+  .overflow-menu.show { display: block; }
+  .overflow-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: #212529;
+    text-align: left;
+    cursor: pointer;
+  }
+  .overflow-item:hover { background: #f1f3f5; }
+  .overflow-item + .overflow-item { border-top: 1px solid #f1f3f5; }
+
+  /* Filter toggle button */
+  .filter-toggle {
+    display: none;
+  }
+
   /* ── Filter Bar ── */
   .filter-bar {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 24px;
+    padding: 10px 16px;
     background: #fff;
     border-bottom: 1px solid #dee2e6;
     flex-wrap: wrap;
   }
   .filter-bar label {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     color: #868e96;
     text-transform: uppercase;
@@ -96,7 +153,7 @@
     background: #fff;
     color: #495057;
     cursor: pointer;
-    min-width: 120px;
+    min-width: 100px;
   }
   .filter-group {
     display: flex;
@@ -104,10 +161,241 @@
     gap: 6px;
   }
 
-  /* ── Table Container ── */
-  .table-wrap {
-    padding: 16px 24px 80px;
+  /* ── Card List Container ── */
+  .list-view {
+    padding: 0 0 100px;
+    max-width: 700px;
+    margin: 0 auto;
   }
+
+  /* ── Date Section Headers ── */
+  .date-section-header {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1c1c1e;
+    padding: 20px 20px 6px;
+  }
+  .date-section-header.overdue {
+    color: #e03131;
+  }
+
+  /* ── Task Cards ── */
+  .task-card {
+    background: #fff;
+    margin: 0 12px 1px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+    transition: background .15s;
+    position: relative;
+  }
+  .task-card:first-child,
+  .date-section-header + .task-card {
+    border-radius: 10px 10px 0 0;
+  }
+  .task-card:last-child,
+  .task-card.section-last {
+    border-radius: 0 0 10px 10px;
+    margin-bottom: 0;
+  }
+  .task-card:only-child,
+  .task-card.section-only {
+    border-radius: 10px;
+  }
+  .task-card:not(:last-child):not(.section-last)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 56px;
+    right: 16px;
+    height: 1px;
+    background: #e5e5ea;
+  }
+  .task-card:hover { background: #f9f9fb; }
+  .task-card.expanded {
+    background: #fff;
+    z-index: 2;
+  }
+  .task-card.done .card-task-name {
+    color: #adb5bd;
+    text-decoration: line-through;
+  }
+  .task-card.done .card-client {
+    color: #ced4da;
+  }
+
+  /* Circular checkbox */
+  .card-checkbox {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #c7c7cc;
+    background: #fff;
+    cursor: pointer;
+    flex-shrink: 0;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .2s;
+  }
+  .card-checkbox:hover {
+    border-color: #007aff;
+  }
+  .card-checkbox.checked {
+    background: #007aff;
+    border-color: #007aff;
+  }
+  .card-checkbox.checked::after {
+    content: '';
+    width: 6px;
+    height: 10px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translateY(-1px);
+  }
+
+  /* Card content */
+  .card-body {
+    flex: 1;
+    min-width: 0;
+  }
+  .card-task-name {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1c1c1e;
+    line-height: 1.3;
+    word-wrap: break-word;
+  }
+  .card-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+    flex-wrap: wrap;
+  }
+  .card-client {
+    font-size: 13px;
+    color: #8e8e93;
+  }
+  .card-due-label {
+    font-size: 12px;
+    color: #8e8e93;
+  }
+  .card-due-label.overdue {
+    color: #e03131;
+    font-weight: 600;
+  }
+  .card-due-label.today {
+    color: #007aff;
+    font-weight: 600;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .2px;
+  }
+  .badge-urgency-3 { background: #ffd8d8; color: #c92a2a; }
+  .badge-urgency-2 { background: #fff3bf; color: #e67700; }
+  .badge-importance-3 { background: #d0ebff; color: #1971c2; }
+  .badge-importance-2 { background: #e7f5ff; color: #1971c2; }
+  .badge-effort-1 { background: #d3f9d8; color: #2b8a3e; }
+  .badge-effort-2 { background: #fff3bf; color: #e67700; }
+  .badge-effort-3 { background: #ffd8d8; color: #c92a2a; }
+
+  /* ── Expanded Edit Area ── */
+  .card-edit {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #e5e5ea;
+  }
+  .task-card.expanded .card-edit {
+    display: block;
+  }
+  .edit-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+  }
+  .edit-row label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #8e8e93;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    width: 72px;
+    flex-shrink: 0;
+  }
+  .edit-row input[type="text"],
+  .edit-row input[type="date"],
+  .edit-row select {
+    flex: 1;
+    padding: 8px 10px;
+    border: 1px solid #d1d1d6;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #1c1c1e;
+    background: #f9f9fb;
+    min-width: 0;
+  }
+  .edit-row input:focus,
+  .edit-row select:focus {
+    outline: none;
+    border-color: #007aff;
+    box-shadow: 0 0 0 3px rgba(0,122,255,.15);
+    background: #fff;
+  }
+  .edit-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4px;
+  }
+  .delete-card-btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: #e03131;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .delete-card-btn:hover { background: #fff5f5; }
+
+  /* Client auto-suggest */
+  .suggest-wrap { position: relative; flex: 1; min-width: 0; }
+  .suggest-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,.1);
+    z-index: 50;
+    max-height: 160px;
+    overflow-y: auto;
+    display: none;
+  }
+  .suggest-list.show { display: block; }
+  .suggest-item {
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  .suggest-item:hover, .suggest-item.active { background: #e9ecef; }
 
   /* ── Empty State ── */
   .empty-state {
@@ -127,180 +415,35 @@
     cursor: pointer;
   }
 
-  /* ── Table ── */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    overflow: hidden;
-    table-layout: fixed;
-  }
-  col.col-done      { width: 52px; }
-  col.col-client    { width: 14%; }
-  col.col-task      { width: auto; }
-  col.col-urgency   { width: 140px; }
-  col.col-importance { width: 100px; }
-  col.col-effort    { width: 110px; }
-  col.col-due       { width: 115px; }
-  col.col-actions   { width: 44px; }
-
-  thead th {
-    padding: 10px 12px;
-    font-size: 11px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    color: #868e96;
-    background: #f8f9fa;
-    border-bottom: 2px solid #dee2e6;
-    text-align: left;
-    cursor: pointer;
-    user-select: none;
-    white-space: nowrap;
-    position: relative;
-  }
-  thead th:hover { color: #495057; }
-  thead th .sort-arrow {
-    margin-left: 4px;
-    font-size: 10px;
-    color: #adb5bd;
-  }
-  thead th .sort-arrow.active { color: #343a40; }
-  thead th:first-child { cursor: default; }
-  thead th:last-child  { cursor: default; }
-
-  tbody tr {
-    border-bottom: 1px solid #f1f3f5;
-    transition: background .1s;
-  }
-  tbody tr:hover { background: #f8f9fa; }
-  tbody tr.editing { background: #fff9db; }
-  tbody tr.done-row td { color: #adb5bd; text-decoration: line-through; }
-  tbody tr.done-row td:first-child { text-decoration: none; }
-
-  td {
-    padding: 8px 12px;
-    font-size: 14px;
-    vertical-align: middle;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* Editable cells */
-  td[contenteditable="true"] {
-    outline: none;
-    cursor: text;
-  }
-  td[contenteditable="true"]:focus {
-    background: #fff;
-    box-shadow: inset 0 0 0 2px #339af0;
-    border-radius: 3px;
-    white-space: normal;
-    overflow: visible;
-  }
-
-  /* Select cells */
-  td select {
-    width: 100%;
+  /* ── FAB (Floating Action Button) ── */
+  .fab {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #007aff;
+    color: #fff;
     border: none;
-    background: transparent;
-    font-size: 14px;
-    color: inherit;
+    font-size: 30px;
+    font-weight: 300;
     cursor: pointer;
-    padding: 0;
-    -webkit-appearance: none;
-    appearance: none;
-  }
-  td select.auto-urgency {
-    color: #868e96;
-  }
-  td select:focus {
-    outline: none;
-    background: #fff;
-    box-shadow: inset 0 0 0 2px #339af0;
-    border-radius: 3px;
-    -webkit-appearance: auto;
-    appearance: auto;
-  }
-
-  /* Date input */
-  td input[type="date"] {
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    font-family: inherit;
-    color: inherit;
-    width: 100%;
-    padding: 0;
-    cursor: pointer;
-  }
-  td input[type="date"]:focus {
-    outline: none;
-    background: #fff;
-    box-shadow: inset 0 0 0 2px #339af0;
-    border-radius: 3px;
-  }
-
-  /* Checkbox */
-  td input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    accent-color: #343a40;
-  }
-
-  /* Delete button */
-  .delete-btn {
-    opacity: 0;
-    border: none;
-    background: none;
-    cursor: pointer;
-    color: #adb5bd;
-    font-size: 16px;
-    padding: 4px;
-    border-radius: 4px;
-    transition: opacity .15s, color .15s, background .15s;
+    box-shadow: 0 4px 14px rgba(0,122,255,.4);
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: transform .2s, box-shadow .2s;
+    z-index: 90;
+    line-height: 1;
   }
-  tr:hover .delete-btn { opacity: 1; }
-  .delete-btn:hover { color: #e03131; background: #fff5f5; }
-
-  /* New-row placeholder */
-  .new-row td {
-    color: #adb5bd;
-    cursor: pointer;
-    font-style: italic;
+  .fab:hover {
+    transform: scale(1.08);
+    box-shadow: 0 6px 20px rgba(0,122,255,.5);
   }
-  .new-row:hover td { background: #f1f3f5; color: #868e96; }
-
-  /* Client auto-suggest */
-  .client-cell { position: relative; }
-  .suggest-list {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-    box-shadow: 0 4px 12px rgba(0,0,0,.1);
-    z-index: 50;
-    max-height: 160px;
-    overflow-y: auto;
-    display: none;
+  .fab:active {
+    transform: scale(0.95);
   }
-  .suggest-list.show { display: block; }
-  .suggest-item {
-    padding: 6px 12px;
-    font-size: 13px;
-    cursor: pointer;
-  }
-  .suggest-item:hover, .suggest-item.active { background: #e9ecef; }
 
   /* Confirmation dialog overlay */
   .confirm-overlay {
@@ -314,7 +457,7 @@
   }
   .confirm-box {
     background: #fff;
-    border-radius: 10px;
+    border-radius: 14px;
     padding: 24px 28px;
     max-width: 380px;
     box-shadow: 0 8px 30px rgba(0,0,0,.18);
@@ -323,7 +466,7 @@
   .confirm-actions { display: flex; gap: 8px; justify-content: flex-end; }
   .confirm-actions button {
     padding: 6px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 1px solid #dee2e6;
     font-size: 13px;
     font-weight: 500;
@@ -369,10 +512,7 @@
     min-height: 500px;
   }
 
-  /* Corner cell */
   .matrix-corner { }
-
-  /* Top axis labels */
   .matrix-col-label {
     text-align: center;
     font-size: 12px;
@@ -385,8 +525,6 @@
     align-items: center;
     justify-content: center;
   }
-
-  /* Side axis labels */
   .matrix-row-label {
     font-size: 12px;
     font-weight: 700;
@@ -400,8 +538,6 @@
     writing-mode: vertical-lr;
     transform: rotate(180deg);
   }
-
-  /* Quadrants */
   .quadrant {
     border: 1px solid #dee2e6;
     border-radius: 10px;
@@ -428,8 +564,6 @@
     flex-direction: column;
     gap: 8px;
   }
-
-  /* Quadrant themes */
   .quadrant-do            { background: #d4edda; }
   .quadrant-do .quadrant-header    { background: #28a745; }
   .quadrant-schedule      { background: #cce5ff; }
@@ -439,7 +573,6 @@
   .quadrant-delete        { background: #f8d7da; }
   .quadrant-delete .quadrant-header   { background: #dc3545; }
 
-  /* Task cards */
   .matrix-card {
     background: #fff;
     border: 1px solid rgba(0,0,0,.08);
@@ -460,10 +593,7 @@
     accent-color: #343a40;
     flex-shrink: 0;
   }
-  .matrix-card-content {
-    flex: 1;
-    min-width: 0;
-  }
+  .matrix-card-content { flex: 1; min-width: 0; }
   .matrix-card-client {
     font-size: 12px;
     font-weight: 700;
@@ -481,7 +611,6 @@
     margin-top: 4px;
   }
 
-  /* Effort badges */
   .effort-badge {
     display: inline-block;
     padding: 2px 8px;
@@ -494,7 +623,6 @@
   .effort-2 { background: #fff3bf; color: #e67700; }
   .effort-3 { background: #ffd8d8; color: #c92a2a; }
 
-  /* Empty quadrant placeholder */
   .quadrant-empty {
     flex: 1;
     display: flex;
@@ -509,7 +637,7 @@
   .sync-wrap {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
   }
   .sync-dot {
     width: 8px;
@@ -528,18 +656,6 @@
     color: #868e96;
     white-space: nowrap;
   }
-  .gear-btn {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 18px;
-    color: #868e96;
-    padding: 4px;
-    border-radius: 4px;
-    transition: color .15s, background .15s;
-    line-height: 1;
-  }
-  .gear-btn:hover { color: #495057; background: #f1f3f5; }
 
   /* ── Settings Dialog ── */
   .settings-overlay {
@@ -553,7 +669,7 @@
   }
   .settings-box {
     background: #fff;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 28px 32px;
     width: 420px;
     max-width: 90vw;
@@ -628,6 +744,39 @@
   .settings-disconnect:hover { background: #fff5f5; }
   .settings-close { background: #fff; color: #495057; }
   .settings-close:hover { background: #f1f3f5; }
+
+  /* ── Responsive ── */
+  @media (max-width: 767px) {
+    .top-bar {
+      padding: 0 12px;
+      gap: 6px;
+    }
+    .top-bar h1 { font-size: 15px; }
+    .filter-toggle { display: flex; }
+    .filter-bar {
+      display: none;
+      padding: 10px 12px;
+    }
+    .filter-bar.show { display: flex; }
+    .filter-bar select { min-width: 80px; font-size: 12px; }
+    .list-view { padding: 0 0 90px; }
+    .task-card { margin: 0 0 1px; border-radius: 0 !important; padding: 12px 14px; }
+    .task-card::after { left: 48px !important; right: 14px !important; }
+    .date-section-header { padding: 18px 14px 6px; font-size: 18px; }
+    .fab { bottom: 20px; right: 20px; width: 50px; height: 50px; font-size: 26px; }
+    .edit-row { flex-wrap: wrap; }
+    .edit-row label { width: 100%; margin-bottom: -4px; }
+    .sync-label { display: none; }
+  }
+
+  @media (min-width: 768px) {
+    .list-view {
+      padding: 16px 24px 100px;
+    }
+    .task-card { border-radius: 0; }
+    .date-section-header + .task-card { border-radius: 10px 10px 0 0; }
+    .filter-bar { display: flex !important; }
+  }
 </style>
 </head>
 <body>
@@ -636,17 +785,25 @@
 <div class="top-bar">
   <h1>Task Manager</h1>
   <div class="tabs">
-    <button class="tab active" data-view="list">Task List</button>
-    <button class="tab" data-view="matrix">Eisenhower Matrix</button>
+    <button class="tab active" data-view="list">Tasks</button>
+    <button class="tab" data-view="matrix">Matrix</button>
   </div>
   <div class="top-actions">
     <div class="sync-wrap" id="syncWrap" style="display:none;">
       <span class="sync-dot" id="syncDot"></span>
       <span class="sync-label" id="syncLabel">Not connected</span>
     </div>
-    <button class="gear-btn" id="settingsBtn" title="Cloud Sync Settings">&#9881;</button>
-    <button class="btn" id="exportBtn">Export</button>
-    <button class="btn" id="importBtn">Import</button>
+    <button class="icon-btn" id="filterToggleBtn" title="Toggle filters">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+    </button>
+    <button class="icon-btn" id="settingsBtn" title="Cloud Sync Settings">&#9881;</button>
+    <div class="overflow-wrap">
+      <button class="icon-btn" id="overflowBtn" title="More actions">&#8943;</button>
+      <div class="overflow-menu" id="overflowMenu">
+        <button class="overflow-item" id="exportBtn">Export Tasks</button>
+        <button class="overflow-item" id="importBtn">Import Tasks</button>
+      </div>
+    </div>
     <input type="file" id="importFile" accept=".json">
   </div>
 </div>
@@ -693,34 +850,13 @@
   </div>
 </div>
 
-<!-- ── Table ── -->
-<div class="table-wrap" id="listView">
-  <table id="taskTable">
-    <colgroup>
-      <col class="col-done">
-      <col class="col-client">
-      <col class="col-task">
-      <col class="col-urgency">
-      <col class="col-importance">
-      <col class="col-effort">
-      <col class="col-due">
-      <col class="col-actions">
-    </colgroup>
-    <thead>
-      <tr>
-        <th></th>
-        <th data-sort="client">Client <span class="sort-arrow"></span></th>
-        <th data-sort="task">Task <span class="sort-arrow"></span></th>
-        <th data-sort="urgency">Urgency <span class="sort-arrow"></span></th>
-        <th data-sort="importance">Importance <span class="sort-arrow"></span></th>
-        <th data-sort="effort">Effort <span class="sort-arrow"></span></th>
-        <th data-sort="dueDate">Due Date <span class="sort-arrow"></span></th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody id="taskBody"></tbody>
-  </table>
+<!-- ── Card List ── -->
+<div class="list-view" id="listView">
+  <div id="cardContainer"></div>
 </div>
+
+<!-- ── FAB ── -->
+<button class="fab" id="fabBtn" title="Add new task">+</button>
 
 <!-- ── Eisenhower Matrix View ── -->
 <div class="matrix-view" id="matrixView">
@@ -757,6 +893,7 @@ let tasks = [];
 let sortCol = null;
 let sortDir = 'asc';
 let saveTimer = null;
+let expandedTaskId = null;
 
 const DEFAULT_TASKS = [
   { client: 'Sapphire Social', task: 'Map out social strategy & creative needs', urgency: null, importance: 2, effort: 2, dueDate: '2026-03-06', done: false },
@@ -779,8 +916,6 @@ function loadTasks() {
   if (raw) {
     try {
       tasks = JSON.parse(raw);
-      // Migrate: if tasks still have old hardcoded urgency values from v1
-      // and no migration flag, reset urgency to null so auto-calc takes over
       if (!localStorage.getItem('taskmanager_v2_migrated')) {
         tasks.forEach(t => { t.urgency = null; });
         localStorage.setItem('taskmanager_v2_migrated', '1');
@@ -789,7 +924,6 @@ function loadTasks() {
       return;
     } catch(e) { /* fall through */ }
   }
-  // First load — seed with defaults
   tasks = DEFAULT_TASKS.map(t => ({
     id: generateId(),
     ...t,
@@ -829,7 +963,6 @@ function isoFromInput(val) {
 }
 
 // ── Auto-Urgency from Due Date ──
-// Returns calendar days from today to dueDate (0 = due today, negative = overdue)
 function daysUntil(dueDateStr) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -837,17 +970,44 @@ function daysUntil(dueDateStr) {
   return Math.round((due - today) / (1000 * 60 * 60 * 24));
 }
 
-// Returns effective urgency: manual override if set, otherwise auto from due date.
-// Urgent if due today, tomorrow, or the day after (within 2 days). Also urgent if overdue.
-// No due date and no override → 1 (not urgent).
 function getEffectiveUrgency(task) {
-  if (task.urgency != null) return task.urgency; // manual override
-  if (!task.dueDate) return 1; // no due date = not urgent
+  if (task.urgency != null) return task.urgency;
+  if (!task.dueDate) return 1;
   const days = daysUntil(task.dueDate);
-  return days <= 2 ? 3 : 1; // today + 2 following days = urgent
+  return days <= 2 ? 3 : 1;
 }
 
 const EFFORT_LABELS = { 1: 'Quick', 2: 'Focus', 3: 'Deep' };
+
+// ── Relative date label ──
+function getRelativeDateLabel(dueDateStr) {
+  if (!dueDateStr) return '';
+  const days = daysUntil(dueDateStr);
+  if (days < -1) return Math.abs(days) + ' days overdue';
+  if (days === -1) return '1 day overdue';
+  if (days === 0) return 'Today';
+  if (days === 1) return 'Tomorrow';
+  if (days <= 7) {
+    const d = new Date(dueDateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { weekday: 'long' });
+  }
+  return formatDate(dueDateStr);
+}
+
+// ── Date section grouping ──
+function getDateSection(dueDateStr) {
+  if (!dueDateStr) return { key: 'nodate', label: 'No Date', order: 900 };
+  const days = daysUntil(dueDateStr);
+  if (days < 0) return { key: 'overdue', label: 'Overdue', order: 0, isOverdue: true };
+  if (days === 0) return { key: 'today', label: 'Today', order: 1 };
+  if (days === 1) return { key: 'tomorrow', label: 'Tomorrow', order: 2 };
+  if (days <= 7) {
+    const d = new Date(dueDateStr + 'T00:00:00');
+    const name = d.toLocaleDateString('en-US', { weekday: 'long' });
+    return { key: 'day-' + days, label: name, order: 2 + days };
+  }
+  return { key: 'later', label: 'Later', order: 800 };
+}
 
 // ── Filtering ──
 function getFiltered() {
@@ -890,32 +1050,32 @@ function getSorted(list) {
   return copy;
 }
 
-// ── Render ──
+// ── Client Filter Dropdown ──
+function updateClientFilter() {
+  const sel = document.getElementById('filterClient');
+  const current = sel.value;
+  const clients = uniqueClients();
+  sel.innerHTML = '<option value="">All</option>';
+  clients.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    if (c === current) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Render Cards ──
 function render() {
   updateClientFilter();
   const filtered = getSorted(getFiltered());
-  const tbody = document.getElementById('taskBody');
-  tbody.innerHTML = '';
-
-  // Update sort arrows
-  document.querySelectorAll('thead th[data-sort]').forEach(th => {
-    const arrow = th.querySelector('.sort-arrow');
-    if (th.dataset.sort === sortCol) {
-      arrow.textContent = sortDir === 'asc' ? '▲' : '▼';
-      arrow.classList.add('active');
-    } else {
-      arrow.textContent = '';
-      arrow.classList.remove('active');
-    }
-  });
+  const container = document.getElementById('cardContainer');
+  container.innerHTML = '';
 
   if (tasks.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="8">
-      <div class="empty-state">
-        <p>No tasks yet. Click below to add your first task.</p>
-        <button onclick="addTask()">Add Task</button>
-      </div>
-    </td></tr>`;
+    container.innerHTML = `<div class="empty-state">
+      <p>No tasks yet. Tap + to add your first task.</p>
+    </div>`;
     return;
   }
 
@@ -924,162 +1084,354 @@ function render() {
     const msg = status === 'completed'
       ? 'No completed tasks yet.'
       : 'No tasks match the current filters.';
-    tbody.innerHTML = `<tr><td colspan="8">
-      <div class="empty-state"><p>${msg}</p></div>
-    </td></tr>`;
-    // Still add the new-row
-    appendNewRow(tbody);
+    container.innerHTML = `<div class="empty-state"><p>${msg}</p></div>`;
     return;
   }
 
-  filtered.forEach(task => {
-    const tr = document.createElement('tr');
-    tr.dataset.id = task.id;
-    if (task.done) tr.classList.add('done-row');
-
-    // Done checkbox
-    const tdDone = document.createElement('td');
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.checked = task.done;
-    cb.addEventListener('change', () => {
-      task.done = cb.checked;
-      saveTasks();
-      render();
+  // Group tasks by date section (only when not custom-sorted)
+  if (!sortCol) {
+    const groups = new Map();
+    filtered.forEach(task => {
+      const section = getDateSection(task.dueDate);
+      if (!groups.has(section.key)) {
+        groups.set(section.key, { ...section, tasks: [] });
+      }
+      groups.get(section.key).tasks.push(task);
     });
-    tdDone.appendChild(cb);
-    tr.appendChild(tdDone);
 
-    // Client
-    const tdClient = document.createElement('td');
-    tdClient.classList.add('client-cell');
-    tdClient.contentEditable = true;
-    tdClient.textContent = task.client || '';
-    tdClient.addEventListener('focus', () => { tr.classList.add('editing'); showSuggestions(tdClient, task); });
-    tdClient.addEventListener('blur', () => {
-      setTimeout(() => {
-        tr.classList.remove('editing');
-        hideSuggestions(tdClient);
-        task.client = tdClient.textContent.trim();
-        saveTasks();
-      }, 150);
+    // Sort groups by order, then within each group sort by dueDate
+    const sortedGroups = [...groups.values()].sort((a, b) => a.order - b.order);
+    sortedGroups.forEach(group => {
+      group.tasks.sort((a, b) => {
+        const da = a.dueDate || '9999-99-99';
+        const db = b.dueDate || '9999-99-99';
+        return da.localeCompare(db);
+      });
     });
-    tdClient.addEventListener('input', () => { showSuggestions(tdClient, task); });
-    tdClient.addEventListener('keydown', (e) => { handleSuggestKey(e, tdClient, task); });
-    tr.appendChild(tdClient);
 
-    // Task
-    const tdTask = document.createElement('td');
-    tdTask.contentEditable = true;
-    tdTask.textContent = task.task || '';
-    tdTask.addEventListener('focus', () => tr.classList.add('editing'));
-    tdTask.addEventListener('blur', () => {
-      tr.classList.remove('editing');
-      task.task = tdTask.textContent.trim();
-      saveTasks();
-    });
-    tr.appendChild(tdTask);
+    sortedGroups.forEach(group => {
+      const header = document.createElement('div');
+      header.className = 'date-section-header' + (group.isOverdue ? ' overdue' : '');
+      header.textContent = group.label;
+      container.appendChild(header);
 
-    // Urgency (auto-calculated from due date, with manual override)
-    const tdUrg = document.createElement('td');
-    const selUrg = document.createElement('select');
-    const autoLabel = task.dueDate ? `Auto (${getEffectiveUrgency({...task, urgency: null})})` : 'Auto';
-    [{ v: '', label: autoLabel }, { v: '1', label: '1 — Not Urgent' }, { v: '2', label: '2 — Urgent' }, { v: '3', label: '3 — Urgent' }].forEach(({v, label}) => {
-      const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = label;
-      if ((task.urgency != null && String(task.urgency) === v) || (task.urgency == null && v === '')) opt.selected = true;
-      selUrg.appendChild(opt);
+      group.tasks.forEach((task, i) => {
+        const card = createTaskCard(task);
+        // Assign rounding classes for grouped cards
+        if (group.tasks.length === 1) {
+          card.classList.add('section-only');
+        } else if (i === group.tasks.length - 1) {
+          card.classList.add('section-last');
+        }
+        container.appendChild(card);
+      });
     });
-    if (task.urgency == null) selUrg.classList.add('auto-urgency');
-    selUrg.addEventListener('change', () => {
-      task.urgency = selUrg.value ? Number(selUrg.value) : null;
-      if (task.urgency == null) selUrg.classList.add('auto-urgency');
-      else selUrg.classList.remove('auto-urgency');
-      saveTasks();
+  } else {
+    // Custom sort: flat list, no date sections
+    filtered.forEach(task => {
+      container.appendChild(createTaskCard(task));
     });
-    selUrg.addEventListener('focus', () => tr.classList.add('editing'));
-    selUrg.addEventListener('blur', () => tr.classList.remove('editing'));
-    tdUrg.appendChild(selUrg);
-    tr.appendChild(tdUrg);
-
-    // Importance
-    const tdImp = document.createElement('td');
-    const selImp = document.createElement('select');
-    ['', '1', '2', '3'].forEach(v => {
-      const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = v || '—';
-      if ((task.importance != null && String(task.importance) === v) || (task.importance == null && v === '')) opt.selected = true;
-      selImp.appendChild(opt);
-    });
-    selImp.addEventListener('change', () => {
-      task.importance = selImp.value ? Number(selImp.value) : null;
-      saveTasks();
-    });
-    selImp.addEventListener('focus', () => tr.classList.add('editing'));
-    selImp.addEventListener('blur', () => tr.classList.remove('editing'));
-    tdImp.appendChild(selImp);
-    tr.appendChild(tdImp);
-
-    // Effort
-    const tdEffort = document.createElement('td');
-    const selEffort = document.createElement('select');
-    [{ v: '', label: '—' }, { v: '1', label: '1 — Quick' }, { v: '2', label: '2 — Focus' }, { v: '3', label: '3 — Deep' }].forEach(({v, label}) => {
-      const opt = document.createElement('option');
-      opt.value = v;
-      opt.textContent = label;
-      if ((task.effort != null && String(task.effort) === v) || (task.effort == null && v === '')) opt.selected = true;
-      selEffort.appendChild(opt);
-    });
-    selEffort.addEventListener('change', () => {
-      task.effort = selEffort.value ? Number(selEffort.value) : null;
-      saveTasks();
-    });
-    selEffort.addEventListener('focus', () => tr.classList.add('editing'));
-    selEffort.addEventListener('blur', () => tr.classList.remove('editing'));
-    tdEffort.appendChild(selEffort);
-    tr.appendChild(tdEffort);
-
-    // Due Date
-    const tdDue = document.createElement('td');
-    const dateInput = document.createElement('input');
-    dateInput.type = 'date';
-    dateInput.value = task.dueDate || '';
-    dateInput.addEventListener('change', () => {
-      task.dueDate = isoFromInput(dateInput.value);
-      saveTasks();
-    });
-    dateInput.addEventListener('focus', () => tr.classList.add('editing'));
-    dateInput.addEventListener('blur', () => tr.classList.remove('editing'));
-    tdDue.appendChild(dateInput);
-    tr.appendChild(tdDue);
-
-    // Delete
-    const tdDel = document.createElement('td');
-    const delBtn = document.createElement('button');
-    delBtn.className = 'delete-btn';
-    delBtn.innerHTML = '&#x2715;';
-    delBtn.title = 'Delete task';
-    delBtn.addEventListener('click', () => confirmDelete(task));
-    tdDel.appendChild(delBtn);
-    tr.appendChild(tdDel);
-
-    tbody.appendChild(tr);
-  });
-
-  appendNewRow(tbody);
+  }
 }
 
-function appendNewRow(tbody) {
-  const tr = document.createElement('tr');
-  tr.className = 'new-row';
-  const td = document.createElement('td');
-  td.colSpan = 8;
-  td.textContent = '+ Add new task...';
-  td.addEventListener('click', () => addTask());
-  tr.appendChild(td);
-  tbody.appendChild(tr);
+function createTaskCard(task) {
+  const card = document.createElement('div');
+  card.className = 'task-card';
+  card.dataset.id = task.id;
+  if (task.done) card.classList.add('done');
+  if (expandedTaskId === task.id) card.classList.add('expanded');
+
+  // Checkbox
+  const cb = document.createElement('div');
+  cb.className = 'card-checkbox' + (task.done ? ' checked' : '');
+  cb.addEventListener('click', (e) => {
+    e.stopPropagation();
+    task.done = !task.done;
+    saveTasks();
+    render();
+  });
+  card.appendChild(cb);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'card-body';
+
+  // Task name
+  const name = document.createElement('div');
+  name.className = 'card-task-name';
+  name.textContent = task.task || 'Untitled';
+  body.appendChild(name);
+
+  // Subtitle line
+  const subtitle = document.createElement('div');
+  subtitle.className = 'card-subtitle';
+
+  if (task.client) {
+    const clientEl = document.createElement('span');
+    clientEl.className = 'card-client';
+    clientEl.textContent = task.client;
+    subtitle.appendChild(clientEl);
+  }
+
+  if (task.dueDate) {
+    const dueLabel = document.createElement('span');
+    const days = daysUntil(task.dueDate);
+    const relText = getRelativeDateLabel(task.dueDate);
+    dueLabel.className = 'card-due-label';
+    if (days < 0) dueLabel.classList.add('overdue');
+    else if (days === 0) dueLabel.classList.add('today');
+    dueLabel.textContent = relText;
+    if (task.client) {
+      const sep = document.createElement('span');
+      sep.textContent = ' · ';
+      sep.style.cssText = 'color:#c7c7cc;font-size:12px';
+      subtitle.appendChild(sep);
+    }
+    subtitle.appendChild(dueLabel);
+  }
+
+  // Badges
+  const effUrg = getEffectiveUrgency(task);
+  if (effUrg >= 2) {
+    const b = document.createElement('span');
+    b.className = 'badge badge-urgency-' + effUrg;
+    b.textContent = effUrg === 3 ? 'Urgent' : 'Med';
+    subtitle.appendChild(b);
+  }
+  if (task.importance != null && task.importance >= 2) {
+    const b = document.createElement('span');
+    b.className = 'badge badge-importance-' + task.importance;
+    b.textContent = task.importance === 3 ? 'Important' : 'Med';
+    subtitle.appendChild(b);
+  }
+  if (task.effort != null) {
+    const b = document.createElement('span');
+    b.className = 'badge badge-effort-' + task.effort;
+    b.textContent = EFFORT_LABELS[task.effort];
+    subtitle.appendChild(b);
+  }
+
+  body.appendChild(subtitle);
+
+  // Edit area (shown when expanded)
+  const edit = document.createElement('div');
+  edit.className = 'card-edit';
+
+  // Task name input
+  const taskRow = document.createElement('div');
+  taskRow.className = 'edit-row';
+  taskRow.innerHTML = '<label>Task</label>';
+  const taskInput = document.createElement('input');
+  taskInput.type = 'text';
+  taskInput.value = task.task || '';
+  taskInput.addEventListener('input', () => {
+    task.task = taskInput.value;
+    name.textContent = taskInput.value || 'Untitled';
+    saveTasks();
+  });
+  taskInput.addEventListener('click', (e) => e.stopPropagation());
+  taskRow.appendChild(taskInput);
+  edit.appendChild(taskRow);
+
+  // Client input with auto-suggest
+  const clientRow = document.createElement('div');
+  clientRow.className = 'edit-row';
+  clientRow.innerHTML = '<label>Client</label>';
+  const suggestWrap = document.createElement('div');
+  suggestWrap.className = 'suggest-wrap';
+  const clientInput = document.createElement('input');
+  clientInput.type = 'text';
+  clientInput.value = task.client || '';
+  clientInput.placeholder = 'Client name';
+  const suggestList = document.createElement('div');
+  suggestList.className = 'suggest-list';
+  suggestWrap.appendChild(clientInput);
+  suggestWrap.appendChild(suggestList);
+
+  clientInput.addEventListener('input', () => {
+    task.client = clientInput.value;
+    saveTasks();
+    showClientSuggestions(clientInput, suggestList, task);
+  });
+  clientInput.addEventListener('focus', () => {
+    showClientSuggestions(clientInput, suggestList, task);
+  });
+  clientInput.addEventListener('blur', () => {
+    setTimeout(() => suggestList.classList.remove('show'), 150);
+  });
+  clientInput.addEventListener('click', (e) => e.stopPropagation());
+  clientInput.addEventListener('keydown', (e) => {
+    handleSuggestKeyForInput(e, clientInput, suggestList, task);
+  });
+
+  clientRow.appendChild(suggestWrap);
+  edit.appendChild(clientRow);
+
+  // Due date
+  const dueRow = document.createElement('div');
+  dueRow.className = 'edit-row';
+  dueRow.innerHTML = '<label>Due</label>';
+  const dateInput = document.createElement('input');
+  dateInput.type = 'date';
+  dateInput.value = task.dueDate || '';
+  dateInput.addEventListener('change', () => {
+    task.dueDate = isoFromInput(dateInput.value);
+    saveTasks();
+    render();
+  });
+  dateInput.addEventListener('click', (e) => e.stopPropagation());
+  dueRow.appendChild(dateInput);
+  edit.appendChild(dueRow);
+
+  // Urgency
+  const urgRow = document.createElement('div');
+  urgRow.className = 'edit-row';
+  urgRow.innerHTML = '<label>Urgency</label>';
+  const selUrg = document.createElement('select');
+  const autoLabel = task.dueDate ? `Auto (${getEffectiveUrgency({...task, urgency: null})})` : 'Auto';
+  [{ v: '', label: autoLabel }, { v: '1', label: '1 — Not Urgent' }, { v: '2', label: '2 — Med' }, { v: '3', label: '3 — Urgent' }].forEach(({v, label}) => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = label;
+    if ((task.urgency != null && String(task.urgency) === v) || (task.urgency == null && v === '')) opt.selected = true;
+    selUrg.appendChild(opt);
+  });
+  selUrg.addEventListener('change', () => {
+    task.urgency = selUrg.value ? Number(selUrg.value) : null;
+    saveTasks();
+    render();
+  });
+  selUrg.addEventListener('click', (e) => e.stopPropagation());
+  urgRow.appendChild(selUrg);
+  edit.appendChild(urgRow);
+
+  // Importance
+  const impRow = document.createElement('div');
+  impRow.className = 'edit-row';
+  impRow.innerHTML = '<label>Importance</label>';
+  const selImp = document.createElement('select');
+  [{ v: '', label: '—' }, { v: '1', label: '1 — Low' }, { v: '2', label: '2 — Med' }, { v: '3', label: '3 — High' }].forEach(({v, label}) => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = label;
+    if ((task.importance != null && String(task.importance) === v) || (task.importance == null && v === '')) opt.selected = true;
+    selImp.appendChild(opt);
+  });
+  selImp.addEventListener('change', () => {
+    task.importance = selImp.value ? Number(selImp.value) : null;
+    saveTasks();
+    render();
+  });
+  selImp.addEventListener('click', (e) => e.stopPropagation());
+  impRow.appendChild(selImp);
+  edit.appendChild(impRow);
+
+  // Effort
+  const effRow = document.createElement('div');
+  effRow.className = 'edit-row';
+  effRow.innerHTML = '<label>Effort</label>';
+  const selEff = document.createElement('select');
+  [{ v: '', label: '—' }, { v: '1', label: '1 — Quick' }, { v: '2', label: '2 — Focus' }, { v: '3', label: '3 — Deep' }].forEach(({v, label}) => {
+    const opt = document.createElement('option');
+    opt.value = v;
+    opt.textContent = label;
+    if ((task.effort != null && String(task.effort) === v) || (task.effort == null && v === '')) opt.selected = true;
+    selEff.appendChild(opt);
+  });
+  selEff.addEventListener('change', () => {
+    task.effort = selEff.value ? Number(selEff.value) : null;
+    saveTasks();
+    render();
+  });
+  selEff.addEventListener('click', (e) => e.stopPropagation());
+  effRow.appendChild(selEff);
+  edit.appendChild(effRow);
+
+  // Delete button
+  const actions = document.createElement('div');
+  actions.className = 'edit-actions';
+  const delBtn = document.createElement('button');
+  delBtn.className = 'delete-card-btn';
+  delBtn.textContent = 'Delete Task';
+  delBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    confirmDelete(task);
+  });
+  actions.appendChild(delBtn);
+  edit.appendChild(actions);
+
+  body.appendChild(edit);
+  card.appendChild(body);
+
+  // Tap to expand/collapse
+  card.addEventListener('click', () => {
+    if (expandedTaskId === task.id) {
+      expandedTaskId = null;
+    } else {
+      expandedTaskId = task.id;
+    }
+    render();
+  });
+
+  return card;
+}
+
+// ── Client Auto-Suggest (for input fields) ──
+function showClientSuggestions(input, listEl, task) {
+  const val = input.value.trim().toLowerCase();
+  const clients = uniqueClients().filter(c =>
+    c.toLowerCase().includes(val) && c !== input.value.trim()
+  );
+
+  if (!val || clients.length === 0) {
+    listEl.classList.remove('show');
+    return;
+  }
+
+  listEl.innerHTML = '';
+  clients.forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'suggest-item';
+    item.textContent = c;
+    item.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      input.value = c;
+      task.client = c;
+      saveTasks();
+      listEl.classList.remove('show');
+    });
+    listEl.appendChild(item);
+  });
+  listEl.classList.add('show');
+}
+
+function handleSuggestKeyForInput(e, input, listEl, task) {
+  if (!listEl.classList.contains('show')) {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    return;
+  }
+  const items = listEl.querySelectorAll('.suggest-item');
+  let idx = [...items].findIndex(i => i.classList.contains('active'));
+
+  if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (idx >= 0) items[idx].classList.remove('active');
+    idx = (idx + 1) % items.length;
+    items[idx].classList.add('active');
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (idx >= 0) items[idx].classList.remove('active');
+    idx = idx <= 0 ? items.length - 1 : idx - 1;
+    items[idx].classList.add('active');
+  } else if (e.key === 'Enter') {
+    e.preventDefault();
+    if (idx >= 0) {
+      items[idx].dispatchEvent(new MouseEvent('mousedown'));
+    }
+    input.blur();
+  } else if (e.key === 'Escape') {
+    listEl.classList.remove('show');
+  }
 }
 
 // ── Add / Delete ──
@@ -1096,15 +1448,18 @@ function addTask() {
     createdAt: new Date().toISOString()
   };
   tasks.push(t);
+  expandedTaskId = t.id;
   saveTasks();
   render();
-  // Focus the client cell of the new row
-  const rows = document.querySelectorAll('#taskBody tr[data-id]');
-  const lastRow = rows[rows.length - 1];
-  if (lastRow) {
-    const clientCell = lastRow.querySelector('.client-cell');
-    if (clientCell) clientCell.focus();
-  }
+  // Scroll to and focus the new task's name input
+  setTimeout(() => {
+    const card = document.querySelector(`.task-card[data-id="${t.id}"]`);
+    if (card) {
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const taskInput = card.querySelector('.edit-row input[type="text"]');
+      if (taskInput) taskInput.focus();
+    }
+  }, 50);
 }
 
 function confirmDelete(task) {
@@ -1123,6 +1478,7 @@ function confirmDelete(task) {
   overlay.querySelector('.confirm-cancel').addEventListener('click', () => overlay.remove());
   overlay.querySelector('.confirm-danger').addEventListener('click', () => {
     tasks = tasks.filter(t => t.id !== task.id);
+    if (expandedTaskId === task.id) expandedTaskId = null;
     saveTasksImmediate();
     overlay.remove();
     render();
@@ -1130,116 +1486,32 @@ function confirmDelete(task) {
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
 }
 
-// ── Client Auto-suggest ──
-function showSuggestions(cell, task) {
-  let list = cell.querySelector('.suggest-list');
-  if (!list) {
-    list = document.createElement('div');
-    list.className = 'suggest-list';
-    cell.appendChild(list);
-  }
-
-  const val = cell.textContent.replace(/\n/g, '').trim().toLowerCase();
-  // Exclude content of the suggest-list from our value
-  const clients = uniqueClients().filter(c =>
-    c.toLowerCase().includes(val) && c !== cell.childNodes[0]?.textContent?.trim()
-  );
-
-  if (!val || clients.length === 0) {
-    list.classList.remove('show');
-    return;
-  }
-
-  list.innerHTML = '';
-  clients.forEach(c => {
-    const item = document.createElement('div');
-    item.className = 'suggest-item';
-    item.textContent = c;
-    item.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-      // Clear all child nodes and set text
-      while (cell.firstChild && cell.firstChild !== list) cell.removeChild(cell.firstChild);
-      cell.insertBefore(document.createTextNode(c), list);
-      task.client = c;
-      saveTasks();
-      list.classList.remove('show');
-    });
-    list.appendChild(item);
-  });
-  list.classList.add('show');
-}
-
-function hideSuggestions(cell) {
-  const list = cell.querySelector('.suggest-list');
-  if (list) list.classList.remove('show');
-}
-
-function handleSuggestKey(e, cell, task) {
-  const list = cell.querySelector('.suggest-list');
-  if (!list || !list.classList.contains('show')) {
-    if (e.key === 'Enter') { e.preventDefault(); cell.blur(); }
-    return;
-  }
-  const items = list.querySelectorAll('.suggest-item');
-  let idx = [...items].findIndex(i => i.classList.contains('active'));
-
-  if (e.key === 'ArrowDown') {
-    e.preventDefault();
-    if (idx >= 0) items[idx].classList.remove('active');
-    idx = (idx + 1) % items.length;
-    items[idx].classList.add('active');
-  } else if (e.key === 'ArrowUp') {
-    e.preventDefault();
-    if (idx >= 0) items[idx].classList.remove('active');
-    idx = idx <= 0 ? items.length - 1 : idx - 1;
-    items[idx].classList.add('active');
-  } else if (e.key === 'Enter') {
-    e.preventDefault();
-    if (idx >= 0) {
-      items[idx].dispatchEvent(new MouseEvent('mousedown'));
-    }
-    cell.blur();
-  } else if (e.key === 'Escape') {
-    list.classList.remove('show');
-  }
-}
-
-// ── Client Filter Dropdown ──
-function updateClientFilter() {
-  const sel = document.getElementById('filterClient');
-  const current = sel.value;
-  const clients = uniqueClients();
-  sel.innerHTML = '<option value="">All</option>';
-  clients.forEach(c => {
-    const opt = document.createElement('option');
-    opt.value = c;
-    opt.textContent = c;
-    if (c === current) opt.selected = true;
-    sel.appendChild(opt);
-  });
-}
-
-// ── Sort Handlers ──
-document.querySelectorAll('thead th[data-sort]').forEach(th => {
-  th.addEventListener('click', () => {
-    const col = th.dataset.sort;
-    if (sortCol === col) {
-      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
-    } else {
-      sortCol = col;
-      sortDir = 'asc';
-    }
-    render();
-  });
-});
-
 // ── Filter Handlers ──
 ['filterStatus', 'filterClient', 'filterUrgency', 'filterImportance', 'filterEffort'].forEach(id => {
   document.getElementById(id).addEventListener('change', render);
 });
 
+// ── Filter Toggle (mobile) ──
+document.getElementById('filterToggleBtn').addEventListener('click', () => {
+  const bar = document.getElementById('filterBar');
+  bar.classList.toggle('show');
+});
+
+// ── Overflow Menu ──
+document.getElementById('overflowBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('overflowMenu').classList.toggle('show');
+});
+document.addEventListener('click', () => {
+  document.getElementById('overflowMenu').classList.remove('show');
+});
+
+// ── FAB ──
+document.getElementById('fabBtn').addEventListener('click', () => addTask());
+
 // ── Export ──
 document.getElementById('exportBtn').addEventListener('click', () => {
+  document.getElementById('overflowMenu').classList.remove('show');
   const now = new Date();
   const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   const blob = new Blob([JSON.stringify(tasks, null, 2)], { type: 'application/json' });
@@ -1252,6 +1524,7 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 
 // ── Import ──
 document.getElementById('importBtn').addEventListener('click', () => {
+  document.getElementById('overflowMenu').classList.remove('show');
   document.getElementById('importFile').click();
 });
 document.getElementById('importFile').addEventListener('change', (e) => {
@@ -1288,15 +1561,18 @@ document.querySelectorAll('.tab').forEach(tab => {
     const filterBar = document.getElementById('filterBar');
     const listView = document.getElementById('listView');
     const matrixView = document.getElementById('matrixView');
+    const fab = document.getElementById('fabBtn');
 
     if (view === 'list') {
       filterBar.style.display = '';
       listView.style.display = '';
+      fab.style.display = '';
       matrixView.classList.remove('active');
       render();
     } else {
       filterBar.style.display = 'none';
       listView.style.display = 'none';
+      fab.style.display = 'none';
       matrixView.classList.add('active');
       renderMatrix();
     }
@@ -1309,7 +1585,6 @@ function renderMatrix() {
   const categorized = activeTasks.filter(t => t.importance != null);
   const uncatCount = activeTasks.length - categorized.length;
 
-  // Uncategorized banner
   const banner = document.getElementById('uncatBanner');
   if (uncatCount > 0) {
     banner.innerHTML = `<div class="uncat-banner">${uncatCount} task${uncatCount > 1 ? 's' : ''} missing Importance and not shown in the matrix. <a id="uncatLink">Go to Task List</a></div>`;
@@ -1320,7 +1595,6 @@ function renderMatrix() {
     banner.innerHTML = '';
   }
 
-  // Classify tasks into quadrants using effective urgency
   const quadrants = { do: [], schedule: [], delegate: [], delete: [] };
   categorized.forEach(t => {
     const urgent = getEffectiveUrgency(t) >= 2;
@@ -1331,7 +1605,6 @@ function renderMatrix() {
     else quadrants.delete.push(t);
   });
 
-  // Render each quadrant
   renderQuadrant('qDoBody', quadrants.do);
   renderQuadrant('qScheduleBody', quadrants.schedule);
   renderQuadrant('qDelegateBody', quadrants.delegate);
@@ -1569,7 +1842,6 @@ function openSettings() {
 
     try {
       if (binId) {
-        // Connect to existing bin — verify it works
         const res = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
           headers: { 'X-Master-Key': apiKey }
         });
@@ -1578,7 +1850,6 @@ function openSettings() {
         localStorage.setItem(SYNC_KEY_BIN, binId);
         await loadFromCloud();
       } else {
-        // First time — create a new bin
         localStorage.setItem(SYNC_KEY_API, apiKey);
         const newBinId = await createBin(apiKey);
         localStorage.setItem(SYNC_KEY_BIN, newBinId);
